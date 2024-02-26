@@ -28,20 +28,24 @@ class MaxPoolLayer(Layer):
         self.setPrevIn(dataIn)  # Store the input data for use in the backward pass
 
         # Calculate dimensions of the output feature map
-        dim1 = int(np.floor(((dataIn.shape[0] - self.width) / self.stride) + 1))
-        dim2 = int(np.floor(((dataIn.shape[1] - self.width) / self.stride) + 1))
+        dim0 = dataIn.shape[ 0 ]
+        dim1 = int(np.floor(((dataIn.shape[1] - self.width) / self.stride) + 1))
+        dim2 = int(np.floor(((dataIn.shape[2] - self.width) / self.stride) + 1))
 
-        # Initialize the output feature map with zeros
-        y = np.zeros((dim1, dim2))
-        for i in range(dim1):
-            for j in range(dim2):
-                # Perform max pooling operation on the window of data
-                y[i, j] = np.max(
-                    dataIn[
-                        i * self.stride: i * self.stride + self.width,
-                        j * self.stride: j * self.stride + self.width,
-                    ]
-                )
+        # Initialize the output tensor with zeros
+        y = np.zeros((dim0, dim1, dim2))
+
+        # Loop through each tensor
+        for h in range(dim0):
+            for i in range(dim1):
+                for j in range(dim2):
+                    # Perform max pooling operation on the window of data
+                    y[h, i, j] = np.max(
+                        dataIn[h,
+                            i * self.stride: i * self.stride + self.width,
+                            j * self.stride: j * self.stride + self.width,
+                        ]
+                    )
 
         self.setPrevOut(y)  # Store the output data for use in subsequent layers
         return y

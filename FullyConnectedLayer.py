@@ -44,7 +44,7 @@ class FullyConnectedLayer(Layer):
 
 		# Randomly initialize weights and biases
 		self.weights = np.random.uniform(-1e-4, 1e-4, (sizeIn, sizeOut))
-		self.bias = np.random.uniform(-1e-4, 1e-4, (1, sizeOut))
+		#self.bias = np.random.uniform(-1e-4, 1e-4, (1, sizeOut))
 
 	def getWeights( self ):
 		"""
@@ -100,7 +100,7 @@ class FullyConnectedLayer(Layer):
 		self.setPrevIn(dataIn)
 
 		# Calculate output using dot product of input and weights, plus bias
-		y = np.dot(dataIn, self.getWeights()) + self.getBiases()
+		y = np.dot(dataIn, self.getWeights()) #+ self.getBiases()
 
 		# Set previous output
 		self.setPrevOut(y)

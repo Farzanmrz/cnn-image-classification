@@ -53,12 +53,24 @@ class ConvolutionalLayer(Layer):
         :return: The feature map output of the layer after applying the kernel.
         :rtype: np.ndarray
         """
-        self.setPrevIn(dataIn)  # Store the input data for use in the backward pass
+        self.setPrevIn(dataIn)
 
-        # Apply the kernel to the input data to produce a feature map
-        feature_map = self.crossCorrelate2D(dataIn)
-        self.setPrevOut(feature_map)  # Store the output feature map for subsequent layers
-        return feature_map
+        # Declare array to store feature map of each image
+        feature_maps = []
+
+        # Loop through each image in tensor
+        for i in range(dataIn.shape[ 0 ]):
+
+            # Apply the kernel to the input data to produce a feature map
+            feature_map = self.crossCorrelate2D(dataIn[ i ])
+
+            # Append the feature map to the list of feature maps
+            feature_maps.append(feature_map)
+
+        self.setPrevOut(np.array(feature_maps))
+
+        return np.array(feature_maps)
+
 
     def gradient(self):
         """

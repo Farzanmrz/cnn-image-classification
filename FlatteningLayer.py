@@ -23,7 +23,7 @@ class FlatteningLayer(Layer):
         self.setPrevIn(dataIn)  # Store the input data for use in the backward pass
 
         # Flatten the input data into a one-dimensional vector in column-major order
-        y = dataIn.flatten('F').reshape(1, -1)
+        y = dataIn.reshape(dataIn.shape[0], -1)
         self.setPrevOut(y)  # Store the flattened data for use in subsequent layers
         return y
 
@@ -39,7 +39,7 @@ class FlatteningLayer(Layer):
         :return: Gradient reshaped to the shape of the original input.
         :rtype: np.ndarray
         """
-        return gradIn.reshape(self.getPrevIn().shape, order='F')
+        return gradIn.reshape(self.getPrevIn().shape)
 
     def backward(self, gradIn):
         """

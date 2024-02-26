@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # Define layers
 layers = [ConvolutionalLayer.ConvolutionalLayer(9, 9), MaxPoolLayer.MaxPoolLayer(4, 4),
-          FlatteningLayer.FlatteningLayer(), FullyConnectedLayer.FullyConnectedLayer(64, 64),
+          FlatteningLayer.FlatteningLayer(), FullyConnectedLayer.FullyConnectedLayer(64, 1),
           LogisticSigmoidLayer.LogisticSigmoidLayer(), LogLoss.LogLoss()]
 
 # Store initial kernel
@@ -19,6 +19,12 @@ himg = np.zeros((40, 40))
 vimg[ :, 4 ] = 1
 himg[ 32, : ] = 1
 
+# Create the input tensor
+img =np.array([vimg, himg])
+
+# Create target vector y
+y = np.array([0, 1])
+
 # Visualize the synthetic data images
 # fig, ax = plt.subplots(1, 2, figsize = (10, 5))
 # ax[ 0 ].imshow(vimg, cmap = 'gray')
@@ -28,7 +34,7 @@ himg[ 32, : ] = 1
 # plt.show()
 
 # Function to run the CNN
-def runCNN(img, layers):
+def runCNN(layers, img, y):
     ############ Forward pass through the convolutional layer ############
 
     # Convolutional layer
@@ -47,8 +53,22 @@ def runCNN(img, layers):
     yhat = layers[ 4 ].forward(h2)
 
     # Log loss layer
+    loss = layers[ 5 ].eval(y, yhat)
 
+    ############ Backward pass through the convolutional layer ############
 
-    return yhat
+    # Log loss layer
+    ll_grad = layers[ 5 ].gradient(y, yhat)
 
-print(runCNN(vimg, layers))
+    # Fully connected layer
+    #grad = layers[ 3 ].backward(grad)
+
+    # Flattening layer
+    #grad = layers[ 2 ].backward(grad)
+
+    # Max pooling layer
+    #grad = layers[ 1 ].backward(grad)
+
+    return ll_grad
+
+print(runCNN(layers,img,y))
