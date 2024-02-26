@@ -23,7 +23,7 @@ himg[ 32, : ] = 1
 img =np.array([vimg, himg])
 
 # Create target vector y
-y = np.array([0, 1])
+y = np.array([[0],[1]])
 
 # Visualize the synthetic data images
 # fig, ax = plt.subplots(1, 2, figsize = (10, 5))
@@ -35,40 +35,72 @@ y = np.array([0, 1])
 
 # Function to run the CNN
 def runCNN(layers, img, y):
+
+    fin_l = []
+    fin_w = []
+    test = []
+
+    for epoch in range(1):
     ############ Forward pass through the convolutional layer ############
+        h = img
+        # Convolutional layer
+        fmap = layers[ 0 ].forward(h)
 
-    # Convolutional layer
-    fmap = layers[ 0 ].forward(img)
+        # Max pooling layer
+        z = layers[ 1 ].forward(fmap)
 
-    # Max pooling layer
-    z = layers[ 1 ].forward(fmap)
+        # Flattening layer
+        h1 = layers[ 2 ].forward(z)
 
-    # Flattening layer
-    h1 = layers[ 2 ].forward(z)
+        # Fully connected layer
+        h2 = layers[ 3 ].forward(h1)
 
-    # Fully connected layer
-    h2 = layers[ 3 ].forward(h1).T
+        # Logistic sigmoid layer
+        yhat = layers[ 4 ].forward(h2)
 
-    # Logistic sigmoid layer
-    yhat = layers[ 4 ].forward(h2)
+        # Log loss layer
+        loss = layers[ 5 ].eval(y, yhat)
+        #fin_l.append(loss)
 
-    # Log loss layer
-    loss = layers[ 5 ].eval(y, yhat)
+        ############ Backward pass through the convolutional layer ############
 
-    ############ Backward pass through the convolutional layer ############
+        # Log loss layer
+        ll_grad = layers[ 5 ].gradient(y, yhat)
 
-    # Log loss layer
-    ll_grad = layers[ 5 ].gradient(y, yhat)
+        print(layers[4].gradient().shape)
+        # Logistic sigmoid layer
+        #ls_grad = layers[ 4 ].backward(ll_grad)
 
-    # Fully connected layer
-    #grad = layers[ 3 ].backward(grad)
+        # Fully connected layer
+        #fc_grad = layers[ 3 ].backward(ls_grad)
+        #layers[3].updateWeights(ls_grad)
 
-    # Flattening layer
-    #grad = layers[ 2 ].backward(grad)
+        # Flattening layer
+        #fl_grad = layers[ 2 ].backward(fc_grad)
 
-    # Max pooling layer
-    #grad = layers[ 1 ].backward(grad)
+        # Max pooling layer
+        #grad = layers[ 1 ].backward(fl_grad)
 
-    return ll_grad
+        # Convolutional layer update weights
+        #layers[ 0 ].updateWeights(grad)
 
-print(runCNN(layers,img,y))
+        test = ll_grad
+
+    fin_w = layers[ 0 ].getWeights()
+
+    return test
+
+
+
+
+res = runCNN(layers, img, y)
+
+print(res)
+
+
+#dff = fin_w - init_kernel
+
+#print(dff)
+
+
+

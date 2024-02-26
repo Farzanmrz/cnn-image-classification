@@ -66,23 +66,24 @@ class MaxPoolLayer(Layer):
         # Initialize the gradient array with zeros, same size as the input feature map
         grad = np.zeros_like(fmap)
 
-        for i in range(gradIn.shape[0]):
-            for j in range(gradIn.shape[1]):
+        for h in range(gradIn.shape[0]):
+            for i in range(gradIn.shape[1]):
+                for j in range(gradIn.shape[2]):
 
-                # Extract the window of data that was used in the forward pass
-                window = fmap[
-                    i * self.stride: i * self.stride + self.width,
-                    j * self.stride: j * self.stride + self.width,
-                ]
+                    # Extract the window of data that was used in the forward pass
+                    window = fmap[h,
+                        i * self.stride: i * self.stride + self.width,
+                        j * self.stride: j * self.stride + self.width,
+                    ]
 
-                # Find the index of the maximum value in the window
-                max_val_index = np.unravel_index(np.argmax(window, axis=None), window.shape)
+                    # Find the index of the maximum value in the window
+                    max_val_index = np.unravel_index(np.argmax(window, axis=None), window.shape)
 
-                # Assign the gradient to the position of the maximum value
-                grad[
-                    i * self.stride + max_val_index[0],
-                    j * self.stride + max_val_index[1],
-                ] = gradIn[i, j]
+                    # Assign the gradient to the position of the maximum value
+                    grad[h,
+                        i * self.stride + max_val_index[0],
+                        j * self.stride + max_val_index[1],
+                    ] = gradIn[h, i, j]
 
         return grad
 

@@ -62,7 +62,7 @@ class ConvolutionalLayer(Layer):
         for i in range(dataIn.shape[ 0 ]):
 
             # Apply the kernel to the input data to produce a feature map
-            feature_map = self.crossCorrelate2D(dataIn[ i ])
+            feature_map = self.crossCorrelate2D(dataIn[ i ], self.getWeights())
 
             # Append the feature map to the list of feature maps
             feature_maps.append(feature_map)
@@ -106,33 +106,43 @@ class ConvolutionalLayer(Layer):
         :type eta: float
         """
         # Calculate the gradient of the loss function with respect to the kernel weights
-        dJdk = gradIn * self.getPrevIn()
+        grad_weights_accum = np.zeros((self.kh, self.kw))
 
-        # Update the kernel weights using the calculated gradient and the learning rate
-        self.weights -= eta * dJdk
+        # Calculate output dimensions given the input dimensions and kernel size
+        # Assuming stride of 1 and no padding for simplicity
+        output_height = self.getPrevIn().shape[1] - self.kh + 1
+        output_width = self.getPrevIn().shape[2] - self.kw + 1
 
-    def crossCorrelate2D(self, dataIn):
-        """
-        Apply the kernel to the input data using 2D cross-correlation to produce a feature map.
+        # Check for valid dimensions
+        if gradIn.shape[1] != output_height or gradIn.shape[2] != output_width:
+            raise ValueError("gradIn dimensions do not match expected output dimensions.")
 
-        :param dataIn: Input data to the convolutional layer.
-        :type dataIn: np.ndarray
-        :return: The resulting feature map.
-        :rtype: np.ndarray
-        """
-        # Calculate the dimensions of the output feature map
-        dim1 = dataIn.shape[0] - self.kh + 1
-        dim2 = dataIn.shape[1] - self.kw + 1
+        # Iterate over the batch
+        for n in range(gradIn.shape[0]):  # For each image/gradient in the batch
+            for i in range(output_height):
+                for j in range(output_width):
+                    # Extract the corresponding input patch
+                    input_patch = self.getPrevIn()[n, i:i+self.kh, j:j+self.kw]
+                    # Multiply the gradient (for the corresponding output) with the input patch
+                    # and accumulate the results to compute the gradient for the kernel weights
+                    grad_weights_accum += gradIn[n, i, j] * input_patch
 
-        # Initialize the feature map with zeros
+        # Normalize the accumulated gradients by the batch size
+        grad_weights = grad_weights_accum / gradIn.shape[0]
+
+        # Update the weights
+        self.weights -= eta * grad_weights
+
+    def crossCorrelate2D( self, dataIn, x = None):
+
+        dim1 = dataIn.shape[ 0 ] - self.kh + 1
+        dim2 = dataIn.shape[ 1 ] - self.kw + 1
         feature_map = np.zeros((dim1, dim2))
-
-        # Apply the kernel to each position of the input data to create the feature map
         for i in range(dim1):
             for j in range(dim2):
-                feature_map[i, j] = np.sum(
-                    self.getWeights() * dataIn[i: i + self.kh, j: j + self.kw]
-                )
+                feature_map[ i, j ] = np.sum(x * dataIn[ i:i + self.kh, j:j + self.kw ])
 
         return feature_map
+
+
 
