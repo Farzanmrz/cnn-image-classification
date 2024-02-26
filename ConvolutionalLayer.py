@@ -1,17 +1,18 @@
 import numpy as np
 from Layer import Layer
 
+
 class ConvolutionalLayer(Layer):
     """
-    A Convolutional Layer used in Convolutional Neural Networks (CNNs) for processing
-    image-like input data. This layer applies a set of learnable filters to the input
-    to create feature maps.
+    A Convolutional Layer class for use in Convolutional Neural Networks (CNNs).
+    This layer applies a set of learnable filters (kernels) to the input data to create feature maps,
+    which are useful for image recognition tasks.
 
-    :param kh: Height of the kernel (filter).
-    :param kw: Width of the kernel (filter).
+    :param kh: Kernel height.
+    :param kw: Kernel width.
     """
 
-    def __init__(self, kh, kw):
+    def __init__( self, kh, kw ):
         """
         Initializes the Convolutional Layer with specified kernel size.
 
@@ -20,15 +21,15 @@ class ConvolutionalLayer(Layer):
         """
         super().__init__()
 
-        # Initialize weights with small random values. The weights represent the kernel.
+        # Initialize kernel weights with small random values
         self.weights = np.random.uniform(-1e-4, 1e-4, (kh, kw))
 
-        # Set variables for adam learning
-        self.s = 0
-        self.r = 0
-        self.p1 = 0.9
-        self.p2 = 0.999
-        self.delta = 1e-8
+        # Initialize variables for Adam optimization algorithm
+        self.s = 0  # First moment vector
+        self.r = 0  # Second moment vector
+        self.p1 = 0.9  # Decay rate for the first moment estimates
+        self.p2 = 0.999  # Decay rate for the second moment estimates
+        self.delta = 1e-8 # Small constant for numerical stability
 
     def getWeights(self):
         """
@@ -48,75 +49,85 @@ class ConvolutionalLayer(Layer):
         """
         self.weights = weights
 
-    def forward(self, dataIn):
+    def forward( self, dataIn ):
+        """
+        Applies the convolution operation to the input data using the current kernel weights,
+        producing a feature map.
 
+        :param dataIn: The input data to the convolutional layer.
+        :return: The resulting feature map after applying the convolution operation.
+        """
+        # Store the input data for use in the backward pass
         self.setPrevIn(dataIn)
 
-        # Get the feature map from the input data and weights matrix
+        # Compute the feature map using the cross-correlation function
         feature_map = self.crossCorrelate2D(dataIn, self.getWeights())
 
-
+        # Store the output feature map for the backward pass
         self.setPrevOut(feature_map)
 
+        # Return the feature map
         return feature_map
 
-
-    def gradient(self):
+    def gradient( self ):
         """
-        This method should compute the gradient of the loss function with respect to
-        the kernel weights. It is left unimplemented here.
+        Computes the gradient of the loss function with respect to the kernel weights.
+        This method is a placeholder and should be implemented as needed.
 
         :return: None
         """
         pass
 
-    def backward(self, gradIn):
+    def backward( self, gradIn ):
         """
-        Performs the backward pass through the convolutional layer, computing the gradient
-        of the loss function with respect to the input data. It is left unimplemented here.
+        Computes the gradient of the loss function with respect to the input data.
+        This method is a placeholder and should be implemented as needed.
 
-        :param gradIn: Gradient of the loss function with respect to the output of the layer.
+        :param gradIn: The gradient of the loss function with respect to the output of this layer.
         :type gradIn: np.ndarray
         :return: None
         """
         pass
 
     def updateWeights(self, gradIn,t, eta = 0.01):
+        """
+        Updates the kernel weights of the convolutional layer using the Adam optimization algorithm.
 
-        # Apply the gradIn as kernel to the previous input data to produce djdw
-        grad_tens = self.crossCorrelate2D(self.getPrevIn(), gradIn)
-
-        dJdW = np.mean(grad_tens,axis = 0)
+        :param gradIn: Gradient of the loss function with respect to the output of this layer.
+        :param t: The current iteration or time step in the optimization process.
+        :param eta: The learning rate.
+        :type gradIn: np.ndarray
+        :type t: int
+        :type eta: float
+        """
+        # Apply the input gradient to the previous input data to produce the gradient of the loss function with respect to the weights
+        dJdW = np.mean(self.crossCorrelate2D(self.getPrevIn(), gradIn), axis = 0)
 
         # First moment update
         self.s = (self.p1 * self.s) + ((1 - self.p1) * dJdW)
 
         # Second moment update
-        self.r = (self.p2 * self.r) + ((1 - self.p2) * (dJdW * dJdW))
-
-        # Gradient descent numerator
-        numer = self.s / (1 - (self.p1 ** (t + 1)))
-
-        # Gradient descent denominator
-        denom = (((self.r) / (1 - (self.p2 ** (t + 1)))) ** (1 / 2)) + self.delta
+        self.r = (self.p2 * self.r) + ((1 - self.p2) * (dJdW ** 2))
 
         # Final update term
-        update_term = numer / denom
+        update_term = (self.s / (1 - (self.p1 ** (t + 1)))) / (np.sqrt((self.r) / (1 - (self.p2 ** (t + 1)))) + self.delta)
 
         # Update weights
         self.setWeights(self.getWeights() - (eta * update_term))
 
     def crossCorrelate2D( self, dataIn, kernel):
+        """
+        Performs cross-correlation between the input data and the kernel (2D or 3D), producing a feature map.
 
-        # Get kernel height and width for 2D and 3D kernels
-        if kernel.ndim == 2:
-            kernel_height, kernel_width = kernel.shape
-        elif kernel.ndim == 3:
-            _, kernel_height, kernel_width = kernel.shape
-
-        # Throw error if kernel is not 2D or 3D
-        else:
-            raise ValueError("Kernel must be either 2D or 3D.")
+        :param dataIn: The input data to the layer.
+        :param kernel: The kernel (weights) to apply to the input data.
+        :type dataIn: np.ndarray
+        :type kernel: np.ndarray
+        :return: The resulting feature map from the cross-correlation operation.
+        :rtype: np.ndarray
+        """
+        # Determine the kernel dimensions
+        kernel_height, kernel_width = kernel.shape[ -2 ], kernel.shape[ -1 ]
 
         # Prepare an output tensor with correctly calculated dimensions
         feature_maps = np.zeros((dataIn.shape[ 0 ], dataIn.shape[ 1 ] - kernel_height + 1, dataIn.shape[ 2 ] - kernel_width + 1))

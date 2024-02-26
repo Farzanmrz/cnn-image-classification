@@ -29,6 +29,20 @@ init_kernel = layers[ 0 ].getWeights()
 # Create target vector y
 y = np.array([[0],[1]])
 
+def fprop(layers, x, y):
+
+    # Initialize activation with input x
+    activation = x
+
+    # Propagate through all layers except the last
+    for layer in layers[ :-1 ]:
+        activation = layer.forward(activation)
+
+    # Calculate loss using the last layer
+    loss = layers[ -1 ].eval(y, activation)
+
+    # Return the result of last layer and loss
+    return activation, loss
 
 # Function to run the CNN
 def runCNN(layers, img, y):
@@ -38,27 +52,9 @@ def runCNN(layers, img, y):
     prev = 0
 
     for epoch in range(2000):
-    ############ Forward pass through the convolutional layer ############
 
-
-        h = img
-        # Convolutional layer
-        fmap = layers[ 0 ].forward(h)
-
-        # Max pooling layer
-        z = layers[ 1 ].forward(fmap)
-
-        # Flattening layer
-        h1 = layers[ 2 ].forward(z)
-
-        # Fully connected layer
-        h2 = layers[ 3 ].forward(h1)
-
-        # Logistic sigmoid layer
-        yhat = layers[ 4 ].forward(h2)
-
-        # Log loss layer
-        loss = layers[ 5 ].eval(y, yhat)
+        # Forward propogation
+        yhat, loss = fprop(layers, img, y)
         fin_l.append(loss)
 
         ############ Backward pass through the convolutional layer ############
