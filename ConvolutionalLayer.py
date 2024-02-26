@@ -19,8 +19,6 @@ class ConvolutionalLayer(Layer):
         :param kw: Kernel width.
         """
         super().__init__()
-        self.kh = kh  # Height of the kernel
-        self.kw = kw  # Width of the kernel
 
         # Initialize weights with small random values. The weights represent the kernel.
         self.weights = np.random.uniform(-1e-4, 1e-4, (kh, kw))
@@ -44,32 +42,16 @@ class ConvolutionalLayer(Layer):
         self.weights = weights
 
     def forward(self, dataIn):
-        """
-        Performs the forward pass of the convolutional layer using the input data.
-        This involves applying the kernel to the input data to produce a feature map.
 
-        :param dataIn: Input data to the convolutional layer.
-        :type dataIn: np.ndarray
-        :return: The feature map output of the layer after applying the kernel.
-        :rtype: np.ndarray
-        """
         self.setPrevIn(dataIn)
 
-        # Declare array to store feature map of each image
-        feature_maps = []
+        # Get the feature map from the input data and weights matrix
+        feature_map = self.crossCorrelate2D(dataIn, self.getWeights())
 
-        # Loop through each image in tensor
-        for i in range(dataIn.shape[ 0 ]):
 
-            # Apply the kernel to the input data to produce a feature map
-            feature_map = self.crossCorrelate2D(dataIn[ i ], self.getWeights())
+        self.setPrevOut(feature_map)
 
-            # Append the feature map to the list of feature maps
-            feature_maps.append(feature_map)
-
-        self.setPrevOut(np.array(feature_maps))
-
-        return np.array(feature_maps)
+        return feature_map
 
 
     def gradient(self):
@@ -93,49 +75,42 @@ class ConvolutionalLayer(Layer):
         pass
 
     def updateWeights(self, gradIn, eta = 0.01):
-        """
-        Updates the kernel weights of the convolutional layer using the gradient of the
-        loss function with respect to the output of the layer. This method assumes the use
-        of the ADAM optimization algorithm but is not fully implemented.
 
-        :param gradIn: Gradient of the loss function with respect to the output of the layer.
-        :param t: Current iteration number (epoch).
-        :param eta: Learning rate.
-        :type gradIn: np.ndarray
-        :type t: int
-        :type eta: float
-        """
-        # Declare array to store feature map of each image
-        feature_maps = []
+        # Apply the gradIn as kernel to the previous input data to produce djdw
+        djdw = self.crossCorrelate2D(self.getPrevIn(), gradIn)
 
-        prev_input = self.getPrevIn()
-
-        # Loop through each image in tensor
-        for i in range(gradIn.shape[ 0 ]):
-
-            # Apply the kernel to the input data to produce a feature map
-            feature_map = self.crossCorrelate2D(prev_input[i], gradIn[i])
-
-            # Append the feature map to the list of feature maps
-            feature_maps.append(feature_map)
-
-        feature_maps = np.array(feature_maps)
-        # Normalize the accumulated gradients by the batch size
-
-        feature_maps = feature_maps / feature_maps.shape[0]
-
-        self.setWeights(self.getWeights() - (eta * np.mean(feature_maps,axis = 0)))
+        # Update weights
+        self.setWeights(self.getWeights() - (eta * np.mean(djdw,axis = 0)))
 
     def crossCorrelate2D( self, dataIn, kernel):
 
-        dim1 = dataIn.shape[ 0 ] - kernel.shape[ 0 ] + 1
-        dim2 = dataIn.shape[ 1 ] - kernel.shape[ 1 ] + 1
-        feature_map = np.zeros((dim1, dim2))
-        for i in range(dim1):
-            for j in range(dim2):
-                feature_map[ i, j ] = np.sum(kernel * dataIn[ i:i + kernel.shape[ 0 ], j:j + kernel.shape[ 1 ] ])
+        # Get kernel height and width for 2D and 3D kernels
+        if kernel.ndim == 2:
+            kernel_height, kernel_width = kernel.shape
+        elif kernel.ndim == 3:
+            _, kernel_height, kernel_width = kernel.shape
 
-        return feature_map
+        # Throw error if kernel is not 2D or 3D
+        else:
+            raise ValueError("Kernel must be either 2D or 3D.")
+
+        # Prepare an output tensor with correctly calculated dimensions
+        feature_maps = np.zeros((dataIn.shape[ 0 ], dataIn.shape[ 1 ] - kernel_height + 1, dataIn.shape[ 2 ] - kernel_width + 1))
+
+        # Loop over each image in the tensor
+        for b in range(feature_maps.shape[ 0 ]):
+
+            # Loop over the rows of the image
+            for i in range(feature_maps.shape[ 1 ]):
+
+                # Loop over the columns of the image
+                for j in range(feature_maps.shape[ 2 ]):
+
+                    # Use the kernel for the corresponding image if 3D else use the kernel 2D matrix
+                    current_kernel = kernel[ b ] if kernel.ndim == 3 else kernel
+                    feature_maps[ b, i, j ] = np.sum(current_kernel * dataIn[ b, i:i + kernel_height, j:j + kernel_width ])
+
+        return feature_maps
 
 
 

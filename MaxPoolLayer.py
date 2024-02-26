@@ -16,15 +16,7 @@ class MaxPoolLayer(Layer):
         self.stride = stride  # Stride between successive pooling windows
 
     def forward(self, dataIn):
-        """
-        Perform forward pass by applying max pooling to the input data.
 
-        :param dataIn: Incoming feature map.
-        :type dataIn: np.ndarray
-
-        :return: Downsampled feature map after max pooling.
-        :rtype: np.ndarray
-        """
         self.setPrevIn(dataIn)  # Store the input data for use in the backward pass
 
         # Calculate dimensions of the output feature map
@@ -51,16 +43,7 @@ class MaxPoolLayer(Layer):
         return y
 
     def gradient(self, gradIn):
-        """
-        Compute gradients for the max pool layer by mapping the gradients back to the
-        locations of the maximum values in the input feature map.
 
-        :param gradIn: Gradient of the loss with respect to the output of this layer.
-        :type gradIn: np.ndarray
-
-        :return: Gradient of the loss with respect to the input of this layer.
-        :rtype: np.ndarray
-        """
         fmap = self.getPrevIn()  # Retrieve the input feature map from the forward pass
 
         # Initialize the gradient array with zeros, same size as the input feature map
@@ -88,15 +71,5 @@ class MaxPoolLayer(Layer):
         return grad
 
     def backward(self, gradIn):
-        """
-        Perform backward pass by computing the gradient of the loss function with respect
-        to the input of the max pool layer.
 
-        :param gradIn: Gradient of the loss with respect to the output of this layer.
-        :type gradIn: np.ndarray
-
-        :return: Gradient of the loss with respect to the input of this layer.
-        :rtype: np.ndarray
-        """
-        # Compute gradient using the chain rule
         return self.gradient(gradIn)

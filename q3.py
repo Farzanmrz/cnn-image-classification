@@ -25,13 +25,6 @@ img =np.array([vimg, himg])
 # Create target vector y
 y = np.array([[0],[1]])
 
-# Visualize the synthetic data images
-# fig, ax = plt.subplots(1, 2, figsize = (10, 5))
-# ax[ 0 ].imshow(vimg, cmap = 'gray')
-# ax[ 1 ].imshow(himg, cmap = 'gray')
-# ax[ 0 ].axis('off')
-# ax[ 1 ].axis('off')
-# plt.show()
 
 # Function to run the CNN
 def runCNN(layers, img, y):
@@ -40,7 +33,7 @@ def runCNN(layers, img, y):
 
     prev = 0
 
-    for epoch in range(100000):
+    for epoch in range(1000):
     ############ Forward pass through the convolutional layer ############
 
 
@@ -88,12 +81,13 @@ def runCNN(layers, img, y):
         # Convolutional layer update weights
         layers[ 0 ].updateWeights(grad)
 
-        if epoch % 5000 == 0:
+        if epoch % 100 == 0:
             print("Epoch: ", epoch + 1)
             print("Loss: ", loss)
 
-        if np.abs(loss - prev) < 1e-5:
+        if epoch > 1000 and np.abs(loss - prev) < 1e-10:
             print("Converged at epoch: ", epoch + 1)
+            print("Loss: ", loss)
             break
 
         prev = loss
