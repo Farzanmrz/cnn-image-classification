@@ -23,6 +23,13 @@ class ConvolutionalLayer(Layer):
         # Initialize weights with small random values. The weights represent the kernel.
         self.weights = np.random.uniform(-1e-4, 1e-4, (kh, kw))
 
+        # Set variables for adam learning
+        self.s = 0
+        self.r = 0
+        self.p1 = 0.9
+        self.p2 = 0.999
+        self.delta = 1e-8
+
     def getWeights(self):
         """
         Returns the current kernel (weights) of the convolutional layer.
@@ -74,13 +81,30 @@ class ConvolutionalLayer(Layer):
         """
         pass
 
-    def updateWeights(self, gradIn, eta = 0.01):
+    def updateWeights(self, gradIn,t, eta = 0.01):
 
         # Apply the gradIn as kernel to the previous input data to produce djdw
-        djdw = self.crossCorrelate2D(self.getPrevIn(), gradIn)
+        grad_tens = self.crossCorrelate2D(self.getPrevIn(), gradIn)
+
+        dJdW = np.mean(grad_tens,axis = 0)
+
+        # First moment update
+        self.s = (self.p1 * self.s) + ((1 - self.p1) * dJdW)
+
+        # Second moment update
+        self.r = (self.p2 * self.r) + ((1 - self.p2) * (dJdW * dJdW))
+
+        # Gradient descent numerator
+        numer = self.s / (1 - (self.p1 ** (t + 1)))
+
+        # Gradient descent denominator
+        denom = (((self.r) / (1 - (self.p2 ** (t + 1)))) ** (1 / 2)) + self.delta
+
+        # Final update term
+        update_term = numer / denom
 
         # Update weights
-        self.setWeights(self.getWeights() - (eta * np.mean(djdw,axis = 0)))
+        self.setWeights(self.getWeights() - (eta * update_term))
 
     def crossCorrelate2D( self, dataIn, kernel):
 

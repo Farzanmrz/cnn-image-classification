@@ -37,7 +37,7 @@ def runCNN(layers, img, y):
 
     prev = 0
 
-    for epoch in range(10000):
+    for epoch in range(2000):
     ############ Forward pass through the convolutional layer ############
 
 
@@ -74,7 +74,7 @@ def runCNN(layers, img, y):
         fc_grad = layers[ 3 ].backward(ls_grad)
 
 
-        layers[3].updateWeights(ls_grad)
+        layers[3].updateWeights(ls_grad,epoch)
 
         # Flattening layer
         fl_grad = layers[ 2 ].backward(fc_grad)
@@ -83,7 +83,7 @@ def runCNN(layers, img, y):
         grad = layers[ 1 ].backward(fl_grad)
 
         # Convolutional layer update weights
-        layers[ 0 ].updateWeights(grad)
+        layers[ 0 ].updateWeights(grad, epoch)
 
         if epoch % 100 == 0:
             print("Epoch: ", epoch + 1)
@@ -117,3 +117,13 @@ ax[ 0 ][1].axis('off')
 ax[ 1 ][1].axis('off')
 plt.show()
 
+epochs = list(range(1, len(loss) + 1))
+
+# Plotting the log loss against epochs
+plt.figure(figsize=(10, 5))
+plt.plot(epochs, loss, linestyle='-', color='b')
+plt.title('Log Loss per Epoch')
+plt.xlabel('Epoch')
+plt.ylabel('Log Loss')
+plt.grid(True)
+plt.show()

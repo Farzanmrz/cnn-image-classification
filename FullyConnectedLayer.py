@@ -48,6 +48,13 @@ class FullyConnectedLayer(Layer):
 		# Randomly initialize weights
 		self.weights = np.random.uniform(-xav_weight, xav_weight, (sizeIn, sizeOut))
 
+		# Set variables for adam learning
+		self.s = 0
+		self.r = 0
+		self.p1 = 0.9
+		self.p2 = 0.999
+		self.delta = 1e-8
+
 
 	def getWeights( self ):
 		"""
@@ -132,7 +139,7 @@ class FullyConnectedLayer(Layer):
 		return gradIn @ self.gradient()
 
 
-	def updateWeights( self, gradIn, eta = 0.01 ):
+	def updateWeights( self, gradIn,t, eta = 0.01 ):
 		"""
 		Update weights and biases of the layer using gradient descent.
 
@@ -144,8 +151,26 @@ class FullyConnectedLayer(Layer):
 		# Compute gradients of weights and biases
 		#dJdb = np.sum(gradIn, axis = 0) / gradIn.shape[ 0 ]
 
-		djdw = self.getPrevIn().T @ gradIn
+		dJdW = self.getPrevIn().T @ gradIn
+
+		# First moment update
+		self.s = (self.p1 * self.s) + ((1 - self.p1) * dJdW)
+
+
+		# Second moment update
+		self.r = (self.p2 * self.r) + ((1 - self.p2) * (dJdW * dJdW))
+
+
+		# Gradient descent numerator
+		numer = self.s / (1 - (self.p1 ** (t+1)))
+
+
+		# Gradient descent denominator
+		denom = (((self.r) / (1 - (self.p2 ** (t+1)))) ** (1 / 2)) + self.delta
+
+		# Final update term
+		update_term = numer / denom
 
 		# Update weights and biases using gradient descent
-		self.setWeights(self.getWeights() - (eta * djdw))
+		self.setWeights(self.getWeights() - (eta * update_term))
 
