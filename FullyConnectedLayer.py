@@ -124,19 +124,12 @@ class FullyConnectedLayer(Layer):
 		:rtype: numpy.ndarray
 		"""
 
-		# Calculate gradients of weights and biases
-		grads = np.zeros((gradIn.shape[ 1 ],) + self.gradient().shape)
-
-		# Iterate over each element (column) in gradIn
-		for i in range(gradIn.shape[ 1 ]):
-			# Multiply self.gradient() with each element of gradIn and store it
-			grads[ i ] = self.gradient() * gradIn[ 0, i ]
 
 		# Process grads as required further or return it
-		return grads
+		return gradIn @ self.gradient()
 
 
-	def updateWeights( self, gradIn, eta = 0.0001 ):
+	def updateWeights( self, gradIn, eta = 0.01 ):
 		"""
 		Update weights and biases of the layer using gradient descent.
 
@@ -147,11 +140,9 @@ class FullyConnectedLayer(Layer):
 		"""
 		# Compute gradients of weights and biases
 		#dJdb = np.sum(gradIn, axis = 0) / gradIn.shape[ 0 ]
-		dJdW = np.einsum('...i,...ij',self.getPrevIn().T,gradIn) / gradIn.shape[ 0 ]
 
-		# print("Weights: " + str(self.getWeights().shape))
-		# print("DjDw: " + str(dJdW.shape))
+		djdw = self.getPrevIn().T @ gradIn
 
 		# Update weights and biases using gradient descent
-		self.setWeights(self.getWeights() - (eta * dJdW))
-		#self.setBiases(self.getBiases() - (eta * dJdb))
+		self.setWeights(self.getWeights() - (eta * djdw))
+

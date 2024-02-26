@@ -92,7 +92,7 @@ class ConvolutionalLayer(Layer):
         """
         pass
 
-    def updateWeights(self, gradIn, eta = 0.001):
+    def updateWeights(self, gradIn, eta = 0.01):
         """
         Updates the kernel weights of the convolutional layer using the gradient of the
         loss function with respect to the output of the layer. This method assumes the use
@@ -105,42 +105,35 @@ class ConvolutionalLayer(Layer):
         :type t: int
         :type eta: float
         """
-        # Calculate the gradient of the loss function with respect to the kernel weights
-        grad_weights_accum = np.zeros((self.kh, self.kw))
+        # Declare array to store feature map of each image
+        feature_maps = []
 
-        # Calculate output dimensions given the input dimensions and kernel size
-        # Assuming stride of 1 and no padding for simplicity
-        output_height = self.getPrevIn().shape[1] - self.kh + 1
-        output_width = self.getPrevIn().shape[2] - self.kw + 1
+        prev_input = self.getPrevIn()
 
-        # Check for valid dimensions
-        if gradIn.shape[1] != output_height or gradIn.shape[2] != output_width:
-            raise ValueError("gradIn dimensions do not match expected output dimensions.")
+        # Loop through each image in tensor
+        for i in range(gradIn.shape[ 0 ]):
 
-        # Iterate over the batch
-        for n in range(gradIn.shape[0]):  # For each image/gradient in the batch
-            for i in range(output_height):
-                for j in range(output_width):
-                    # Extract the corresponding input patch
-                    input_patch = self.getPrevIn()[n, i:i+self.kh, j:j+self.kw]
-                    # Multiply the gradient (for the corresponding output) with the input patch
-                    # and accumulate the results to compute the gradient for the kernel weights
-                    grad_weights_accum += gradIn[n, i, j] * input_patch
+            # Apply the kernel to the input data to produce a feature map
+            feature_map = self.crossCorrelate2D(prev_input[i], gradIn[i])
 
+            # Append the feature map to the list of feature maps
+            feature_maps.append(feature_map)
+
+        feature_maps = np.array(feature_maps)
         # Normalize the accumulated gradients by the batch size
-        grad_weights = grad_weights_accum / gradIn.shape[0]
 
-        # Update the weights
-        self.weights -= eta * grad_weights
+        feature_maps = feature_maps / feature_maps.shape[0]
 
-    def crossCorrelate2D( self, dataIn, x = None):
+        self.setWeights(self.getWeights() - (eta * np.mean(feature_maps,axis = 0)))
 
-        dim1 = dataIn.shape[ 0 ] - self.kh + 1
-        dim2 = dataIn.shape[ 1 ] - self.kw + 1
+    def crossCorrelate2D( self, dataIn, kernel):
+
+        dim1 = dataIn.shape[ 0 ] - kernel.shape[ 0 ] + 1
+        dim2 = dataIn.shape[ 1 ] - kernel.shape[ 1 ] + 1
         feature_map = np.zeros((dim1, dim2))
         for i in range(dim1):
             for j in range(dim2):
-                feature_map[ i, j ] = np.sum(x * dataIn[ i:i + self.kh, j:j + self.kw ])
+                feature_map[ i, j ] = np.sum(kernel * dataIn[ i:i + kernel.shape[ 0 ], j:j + kernel.shape[ 1 ] ])
 
         return feature_map
 
