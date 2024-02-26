@@ -42,9 +42,12 @@ class FullyConnectedLayer(Layer):
 		self.sizeIn = sizeIn
 		self.sizeOut = sizeOut
 
-		# Randomly initialize weights and biases
-		self.weights = np.random.uniform(-1e-4, 1e-4, (sizeIn, sizeOut))
-		#self.bias = np.random.uniform(-1e-4, 1e-4, (1, sizeOut))
+		# Xavier weight initialization
+		xav_weight = np.sqrt(6 / (sizeIn + sizeOut))
+
+		# Randomly initialize weights
+		self.weights = np.random.uniform(-xav_weight, xav_weight, (sizeIn, sizeOut))
+
 
 	def getWeights( self ):
 		"""

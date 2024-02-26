@@ -5,13 +5,9 @@ import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 import matplotlib.pyplot as plt
 
-# Define layers
-layers = [ConvolutionalLayer.ConvolutionalLayer(9, 9), MaxPoolLayer.MaxPoolLayer(4, 4),
-          FlatteningLayer.FlatteningLayer(), FullyConnectedLayer.FullyConnectedLayer(64, 1),
-          LogisticSigmoidLayer.LogisticSigmoidLayer(), LogLoss.LogLoss()]
 
-# Store initial kernel
-init_kernel = layers[ 0 ].getWeights()
+
+
 
 # Create synthetic data images for vertical and horizontal images
 vimg = np.zeros((40, 40))
@@ -21,6 +17,14 @@ himg[ 32, : ] = 1
 
 # Create the input tensor
 img =np.array([vimg, himg])
+
+# Define layers
+layers = [ConvolutionalLayer.ConvolutionalLayer(9, 9), MaxPoolLayer.MaxPoolLayer(4, 4),
+          FlatteningLayer.FlatteningLayer(), FullyConnectedLayer.FullyConnectedLayer(64, 1),
+          LogisticSigmoidLayer.LogisticSigmoidLayer(), LogLoss.LogLoss()]
+
+# Store initial kernel
+init_kernel = layers[ 0 ].getWeights()
 
 # Create target vector y
 y = np.array([[0],[1]])
@@ -33,7 +37,7 @@ def runCNN(layers, img, y):
 
     prev = 0
 
-    for epoch in range(1000):
+    for epoch in range(10000):
     ############ Forward pass through the convolutional layer ############
 
 
@@ -85,7 +89,7 @@ def runCNN(layers, img, y):
             print("Epoch: ", epoch + 1)
             print("Loss: ", loss)
 
-        if epoch > 1000 and np.abs(loss - prev) < 1e-10:
+        if epoch > 100 and np.abs(loss - prev) < 1e-10:
             print("Converged at epoch: ", epoch + 1)
             print("Loss: ", loss)
             break
