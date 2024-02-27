@@ -21,6 +21,19 @@ class ConvolutionalLayer(Layer):
         """
         super().__init__()
 
+        # Set seed for reproducibility
+        np.random.seed(42)
+
+        # Initialize kernel height and width
+        self.kh = kh
+        self.kw = kw
+
+        # Initialize variables for Adam optimization algorithm
+        self.s = 0  # First moment vector
+        self.r = 0  # Second moment vector
+        self.p1 = 0.9  # Decay rate for the first moment estimates
+        self.p2 = 0.999  # Decay rate for the second moment estimates
+        self.delta = 1e-8 # Small constant for numerical stability
         # Initialize kernel weights with small random values
         self.weights = np.random.uniform(-1e-4, 1e-4, (kh, kw))
 

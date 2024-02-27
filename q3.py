@@ -135,7 +135,7 @@ def runCNN( layers, img, y ):
 			print("Loss: ", loss)
 
 		# Terminating condition
-		if np.abs(loss - prev) < 1e-8:
+		if np.abs(loss - prev) < 1e-7:
 			print("Converged at epoch: ", epoch + 1)
 			print("Loss: ", loss)
 			break
@@ -148,21 +148,36 @@ def runCNN( layers, img, y ):
 # Train the CNN
 loss, fin_kern = runCNN(layers, img, y)
 
+# Visualize the images
+fig, ax = plt.subplots(1, 2, figsize = (10, 5))
+ax[ 0 ].imshow(vimg, cmap = 'gray')
+ax[ 1 ].imshow(himg, cmap = 'gray')
+ax[ 0 ].axis('off')
+ax[ 1 ].axis('off')
+ax[0].set_title('Vertical Image')
+ax[1].set_title('Horizontal Image')
+plt.savefig("2a.png")
+
 # Plot initial and final kernels
 fig, ax = plt.subplots(1, 2, figsize = (10, 5))
 ax[ 0 ].imshow(init_kernel, cmap = 'gray')
 ax[ 1 ].imshow(fin_kern, cmap = 'gray')
 ax[ 0 ].axis('off')
 ax[ 1 ].axis('off')
-plt.savefig("kernels.png")
+ax[0].set_title('Initial Kernel')
+ax[1].set_title('Final Kernel')
+plt.savefig("2b.png")
 plt.show()
 
 # Plot the log loss against epochs
+epochs = list(range(1, len(loss) + 1))
 plt.figure(figsize = (10, 5))
-plt.plot(list(range(1, len(loss) + 1)), loss, linestyle = '-', color = 'b')
+plt.plot(range(1, len(loss) + 1), loss, linestyle='-', color='b')
+plt.scatter([1, len(loss)], [loss[0], loss[-1]], color='red', zorder=5)  # Ensure points are on top
+plt.text(1 + 250, loss[0] - 0.02, f'({1}, {loss[0]})', color='red', fontsize=14, ha='right')
+plt.text(len(loss) - 300, loss[-1] + 0.05, f'({len(loss)}, {loss[-1]})', color='red', fontsize=14, ha='left')
 plt.title('Log Loss per Epoch')
 plt.xlabel('Epoch')
 plt.ylabel('Log Loss')
-plt.grid(True)
-plt.savefig("LogLoss.png")
+plt.savefig("2c.png")
 plt.show()

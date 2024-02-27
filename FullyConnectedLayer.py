@@ -42,6 +42,9 @@ class FullyConnectedLayer(Layer):
 		self.sizeIn = sizeIn
 		self.sizeOut = sizeOut
 
+		# Set seed for reproducibility
+		np.random.seed(42)
+
 		# Xavier weight initialization
 		xav_weight = np.sqrt(6 / (sizeIn + sizeOut))
 
