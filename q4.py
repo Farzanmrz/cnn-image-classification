@@ -45,7 +45,7 @@ ytrain = OneHotEncoder(sparse_output=False).fit_transform(np.array(subject_label
 layers = [ ConvolutionalLayer.ConvolutionalLayer(9, 9),
            MaxPoolLayer.MaxPoolLayer(4, 4),
            FlatteningLayer.FlatteningLayer(),
-           FullyConnectedLayer.FullyConnectedLayer(64, 1),
+           FullyConnectedLayer.FullyConnectedLayer(64, 14),
            SoftmaxLayer.SoftmaxLayer(),
            CrossEntropy.CrossEntropy() ]
 
@@ -160,11 +160,11 @@ def runCNN( layers, img, y ):
 			print("Epoch: ", epoch + 1)
 			print("Loss: ", loss)
 
-		# # Terminating condition
-		# if np.abs(loss - prev) < 1e-10:
-		# 	print("Converged at epoch: ", epoch + 1)
-		# 	print("Loss: ", loss)
-		# 	break
+		# Terminating condition
+		if np.abs(loss - prev) < 1e-7:
+			print("Converged at epoch: ", epoch + 1)
+			print("Loss: ", loss)
+			break
 
 		prev = loss
 
